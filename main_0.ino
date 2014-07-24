@@ -102,7 +102,7 @@ void setup(){
 void loop(){
 	
 	if(commandFlag){
-		Serial.println("In handling read..."); 
+		Serial.println("In handling read...");
 		
 		//parse according to communication type
 		switch(currentCommand){
@@ -143,44 +143,62 @@ void loop(){
 			Serial.print("badChecksum flag = ");
 			Serial.println(badChecksum);
 
+			// Safety: Zero the hook (this should have no effect since the hook should always start zeroed.)
+			hookStepper->SetMotor(
+				StepperMotor::Slow,
+				StepperMotor::StepsPerRotation / 6,
+				hookReleaseDirection,
+				hookLimitPin,
+				1,
+				false);
+
+
+			// Spin to the right bottle.
 			if (numBottles > 0 && (rotation == CW || rotation == CCW)){
 				spireStepper->SetMotor(
-						StepperMotor::Medium,
+						StepperMotor::MediumRamp,
 						((((StepperMotor::StepsPerRotation * numBottles)/6) *5)/2)/* + 500*/, // 500 overshoot - 5/2 is gear ratio
-						StepperMotor::Full,
 						rotation==CW ? StepperMotor::Clockwise : StepperMotor::CounterClockwise,
 						spireLimitPin,
 						numBottles);
 			}
 
-			if (pourAmount > 0 && dispenseType == Shot){
-
-				hookStepper->SetMotor(
-					StepperMotor::Slow,
-					StepperMotor::StepsPerRotation / 6,
-					StepperMotor::Full,
-					hookReleaseDirection,
-					hookLimitPin,
-					1,
-					false);
-
-				for (int i = 0; i < pourAmount; ++i){
+			if (pourAmount > 0){
+				if (dispenseType == Shot){
+					for (int i = 0; i < pourAmount; ++i){
+						hookStepper->SetMotor(
+							StepperMotor::Slow,
+							hookPullAmount,
+							hookPullDirection);
+						delay(3500);
+						hookStepper->SetMotor(
+							StepperMotor::Slow,
+							hookPullAmount + 100,
+							hookReleaseDirection,
+							hookLimitPin,
+							1);
+						delay(200);
+					}
+				}
+				if (dispenseType == FreePour){
 					hookStepper->SetMotor(
 						StepperMotor::Slow,
 						hookPullAmount,
-						StepperMotor::Full,
 						hookPullDirection);
-					delay(3500);
+
+					// TODO - configure this value (or send it from the rpi?)
+					delay(3500*pourAmount);
+					
 					hookStepper->SetMotor(
 						StepperMotor::Slow,
 						hookPullAmount + 100,
-						StepperMotor::Full,
 						hookReleaseDirection,
 						hookLimitPin,
 						1);
-					delay(200);
 				}
 			}
+
+
 
 			status = Idle;
 			break;
@@ -227,14 +245,12 @@ void loop(){
 					spireStepper->SetMotor(
 						StepperMotor::Slow,
 						nSteps * 5,
-						StepperMotor::Full,
 						motorDir);
 					break;
 				case Hook:
 					hookStepper->SetMotor(
 						StepperMotor::Slow,
 						nSteps * 5,
-						StepperMotor::Full,
 						motorDir);
 					break;
 				}
@@ -320,8 +336,8 @@ void requestEvent(){
 				Wire.write(0);
 			}
 			else{
-				timeRemaining += 1; //testing
-				Wire.write(timeRemaining);
+				timeRemaining = 255; // testing (no overflow please!)
+				Wire.write(timeRemaining); // TODO - do we care?
 			}
 			break;
 		case FaultRequest:

@@ -1,0 +1,3 @@
+- configure speed ramp in motor.cpp
+- configure free pour duration in main
+- double check about time_remaining command (does rpi care about this value?)

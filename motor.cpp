@@ -20,7 +20,7 @@ void StepperMotor::Initialize()
 
 /*
 
-Set the motor to go `numSteps` steps in direction `dir` with speed `speed` and step type `sType`.
+Set the motor to go `numSteps` steps in direction `dir` with speed `speed`.
 
 If `limit_pin` is greater than -1, then after each step, checks whether the pin reads a zero. If it does, then the
 limit has been hit and the function stops moving the motor and returns true.
@@ -32,7 +32,7 @@ In both cases return true if the limit was tripped the specified number of times
 false
 
 */
-bool StepperMotor::SetMotor(StepSpeed speed, uint16_t numSteps, StepType sType, Direction dir, uint8_t limit_pin, uint8_t limit_count, bool ignore_starting_on_switch){
+bool StepperMotor::SetMotor(StepSpeed speed, uint16_t numSteps, Direction dir, uint8_t limit_pin, uint8_t limit_count, bool ignore_starting_on_switch){
 
 	Serial.println("Doing SetMotor with:");
 		Serial.print("   speed   : "); Serial.println(speed);
@@ -42,25 +42,37 @@ bool StepperMotor::SetMotor(StepSpeed speed, uint16_t numSteps, StepType sType, 
 	 digitalWrite(enablePin, LOW); // enable it
 
 	//delay in microseconds between step transitions - half the period
-	uint32_t halfPeriod = 0;
+	 uint32_t startHalfPeriod = 0;
+	 uint32_t endHalfPeriod   = 0;
+
+	 uint32_t halfPeriod;
 
 	//set direction
 	digitalWrite(dirPin, dir);
 
 	//set (half) period amount depending on speed
 	switch(speed){
-	case Slow: halfPeriod = 1000; //500 Hz
+	case Slow:
+		startHalfPeriod = 1000; // 500 Hz
+		endHalfPeriod   = 1000; // 500 Hz
 		break;
-	case Medium: halfPeriod = 500; //1 kHz
+	case Medium:
+		startHalfPeriod = 500; // 1 kHz
+		endHalfPeriod   = 500; // 1 kHz
 		break;
-	case Fast: halfPeriod = 333; //~3 kHz
+	case MediumRamp:
+		startHalfPeriod = 500; // 1 kHz
+		endHalfPeriod   = 166; // 3 kHz
 		break;
-	default: halfPeriod = 500;
+	default:
+		startHalfPeriod = 500; // 1 kHz
+		endHalfPeriod   = 500; // 1 kHz
 	}
 	
 	// We only start out waiting for it if it's not already pressed.
 	bool waiting_for_limit = ignore_starting_on_switch ? (digitalRead(limit_pin) != 0) : true;
 
+	halfPeriod = startHalfPeriod;
 
 	for(int i = 0; i < numSteps; i++){
 
@@ -71,6 +83,16 @@ bool StepperMotor::SetMotor(StepSpeed speed, uint16_t numSteps, StepType sType, 
 
 		digitalWrite(stepPin, HIGH);
 		busyWait(halfPeriod);
+
+		// Ramp up the speed every four steps by decreasing the total period by one
+		// microsecond. This should take us from 1 to 3 kHz in around one second.
+		// TODO - this will require a bunch of tweaking for sure.
+		//
+		// NB it's also a non-linear acceleration, since as we increase the speed we
+		// also increase the rate at which we accelerate.
+		if ((i % 4) == 3 && (halfPeriod < endHalfPeriod)){
+			--halfPeriod;
+		}
 
 		// If we actually care about limit switches
 		if(limit_pin >= 0){
