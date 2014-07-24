@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="StepperMotor">
+      <UniqueIdentifier>{c0a67b42-121e-418d-a416-cc5cfba16db5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="LED">
+      <UniqueIdentifier>{5b84befc-8c57-4bb5-b9c5-379b2f71e70f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="main_0.ino" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Visual Micro\.main_0.vsarduino.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="motor.h">
+      <Filter>StepperMotor</Filter>
+    </ClInclude>
+    <ClInclude Include="led.h">
+      <Filter>LED</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="motor.cpp">
+      <Filter>StepperMotor</Filter>
+    </ClCompile>
+    <ClCompile Include="led.cpp">
+      <Filter>LED</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
