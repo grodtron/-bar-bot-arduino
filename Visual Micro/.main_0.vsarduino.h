@@ -46,9 +46,9 @@ void requestEvent();
 
 #include "C:\Program Files (x86)\Arduino\hardware\arduino\cores\arduino\arduino.h"
 #include "C:\Program Files (x86)\Arduino\hardware\arduino\variants\standard\pins_arduino.h" 
-#include "C:\Users\gordon\Documents\main_0\main_0.ino"
-#include "C:\Users\gordon\Documents\main_0\led.cpp"
-#include "C:\Users\gordon\Documents\main_0\led.h"
-#include "C:\Users\gordon\Documents\main_0\motor.cpp"
-#include "C:\Users\gordon\Documents\main_0\motor.h"
+#include "C:\Users\gordon\Documents\bar-bot\main_0\main_0.ino"
+#include "C:\Users\gordon\Documents\bar-bot\main_0\led.cpp"
+#include "C:\Users\gordon\Documents\bar-bot\main_0\led.h"
+#include "C:\Users\gordon\Documents\bar-bot\main_0\motor.cpp"
+#include "C:\Users\gordon\Documents\bar-bot\main_0\motor.h"
 #endif

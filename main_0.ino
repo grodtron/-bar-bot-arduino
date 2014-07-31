@@ -21,7 +21,7 @@ enum MotorName{ Spire = 0, Hook = 1 };
 StepperMotor::Direction hookPullDirection;
 StepperMotor::Direction hookReleaseDirection;
 
-uint32_t hookPullAmount = 990;
+uint32_t hookPullAmount;
 
 bool commandFlag;
 bool requestFlag;
@@ -83,11 +83,14 @@ void setup(){
 	  Wire.begin(0x11);
 	  hookPullDirection = StepperMotor::CounterClockwise;
 	  hookReleaseDirection = StepperMotor::Clockwise;
+	  hookPullAmount = 800;
   }
   else{
 	  Wire.begin(0x22);
 	  hookPullDirection = StepperMotor::Clockwise;
 	  hookReleaseDirection = StepperMotor::CounterClockwise;
+	  hookPullAmount = 1070;
+
   }
 
   Wire.onReceive(receiveEvent);
@@ -174,7 +177,7 @@ void loop(){
 							StepperMotor::Slow,
 							hookPullAmount,
 							hookPullDirection);
-						delay(3500);
+						delay(3000);
 						hookStepper->SetMotor(
 							StepperMotor::Slow,
 							hookPullAmount + 100,
@@ -191,7 +194,7 @@ void loop(){
 						hookPullDirection);
 
 					// TODO - configure this value (or send it from the rpi?)
-					delay(3500*pourAmount);
+					delay(2000*pourAmount);
 					
 					hookStepper->SetMotor(
 						StepperMotor::Slow,
