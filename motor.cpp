@@ -62,7 +62,7 @@ bool StepperMotor::SetMotor(StepSpeed speed, uint16_t numSteps, Direction dir, u
 		break;
 	case MediumRamp:
 		startHalfPeriod = 500; // 1 kHz
-		endHalfPeriod   = 166; // 3 kHz
+		endHalfPeriod   = 300; // TODO kHz
 		break;
 	default:
 		startHalfPeriod = 500; // 1 kHz
@@ -90,10 +90,14 @@ bool StepperMotor::SetMotor(StepSpeed speed, uint16_t numSteps, Direction dir, u
 		//
 		// NB it's also a non-linear acceleration, since as we increase the speed we
 		// also increase the rate at which we accelerate.
-		if ((i % 4) == 3 && (halfPeriod < endHalfPeriod)){
+		if (!(i%2) && (i < 2*(startHalfPeriod - endHalfPeriod)) && (halfPeriod > endHalfPeriod)){
 			--halfPeriod;
 		}
-
+		
+		if (!(i%2) && (numSteps - i) <= 2*(startHalfPeriod - endHalfPeriod)){
+			++halfPeriod;
+		}
+		
 		// If we actually care about limit switches
 		if(limit_pin >= 0){
 
