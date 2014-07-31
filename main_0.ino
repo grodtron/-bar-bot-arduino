@@ -18,10 +18,10 @@ enum DispenseType{Shot = 0, FreePour = 1, NoPour = 2};
 enum Rotation{CW = 0, CCW = 1, NoRotation = 2};
 enum MotorName{ Spire = 0, Hook = 1 };
 
-StepperMotor::Direction hookPullDirection    = StepperMotor::CounterClockwise;
-StepperMotor::Direction hookReleaseDirection = StepperMotor::Clockwise;
+StepperMotor::Direction hookPullDirection;
+StepperMotor::Direction hookReleaseDirection;
 
-uint32_t hookPullAmount = 1550;
+uint32_t hookPullAmount = 990;
 
 bool commandFlag;
 bool requestFlag;
@@ -81,9 +81,13 @@ void setup(){
   // Set i2c address based on which slot we're in
   if (digitalRead(i2c_addr_pin)){
 	  Wire.begin(0x11);
+	  hookPullDirection = StepperMotor::CounterClockwise;
+	  hookReleaseDirection = StepperMotor::Clockwise;
   }
   else{
 	  Wire.begin(0x22);
+	  hookPullDirection = StepperMotor::Clockwise;
+	  hookReleaseDirection = StepperMotor::CounterClockwise;
   }
 
   Wire.onReceive(receiveEvent);
