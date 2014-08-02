@@ -25,12 +25,18 @@
     <ClInclude Include="led.h">
       <Filter>LED</Filter>
     </ClInclude>
+    <ClInclude Include="hsv.h">
+      <Filter>LED</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="motor.cpp">
       <Filter>StepperMotor</Filter>
     </ClCompile>
     <ClCompile Include="led.cpp">
+      <Filter>LED</Filter>
+    </ClCompile>
+    <ClCompile Include="hsv.cpp">
       <Filter>LED</Filter>
     </ClCompile>
   </ItemGroup>

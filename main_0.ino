@@ -64,6 +64,9 @@ void setup(){
 }
 
 void loop(){
+
+	strip->update();
+
 }
 
 

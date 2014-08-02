@@ -78,11 +78,13 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="hsv.h" />
     <ClInclude Include="led.h" />
     <ClInclude Include="motor.h" />
     <ClInclude Include="Visual Micro\.main_0.vsarduino.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="hsv.cpp" />
     <ClCompile Include="led.cpp" />
     <ClCompile Include="motor.cpp" />
   </ItemGroup>

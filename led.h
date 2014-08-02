@@ -12,6 +12,10 @@ class LedStrip {
 	uint8_t pin;
 	Adafruit_NeoPixel adaStrip;
 	
+	unsigned long waitingForTime;
+
+	void setLed(uint8_t column, uint8_t led, uint32_t color);
+
   public:
 	LedStrip(uint8_t _pin);
 
@@ -20,6 +24,8 @@ class LedStrip {
    	void Initialize();
 	void SetIdle(uint8_t mode);
 	void SetBottle(uint8_t bottleNum, uint8_t mode, uint8_t color);
+
+	void update();
 
 
 };
