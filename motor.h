@@ -11,11 +11,10 @@ class StepperMotor {
 	//control pins
 	uint8_t stepPin;
 	uint8_t dirPin, enablePin, resetPin;
-	uint32_t prevTime, currTime;
 
-	void busyWait(uint32_t waitTime);
 
   public:
+    static void busyWait(uint32_t waitTime);
 
 	enum Direction{ Clockwise, CounterClockwise };
 	enum StepSpeed{ Slow, Medium, MediumRamp };

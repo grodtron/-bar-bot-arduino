@@ -1,5 +1,10 @@
 #include "motor.h"
 
+#include "led.h"
+
+extern LedStrip* strip;
+
+
 StepperMotor::StepperMotor (uint8_t _stepPin, uint8_t _dirPin,
 				uint8_t _enablePin, uint8_t _resetPin ): 
 					stepPin(_stepPin), dirPin(_dirPin),
@@ -136,10 +141,12 @@ bool StepperMotor::SetMotor(StepSpeed speed, uint16_t numSteps, Direction dir, u
 
 void StepperMotor::busyWait(uint32_t waitTime){
 	uint32_t elapsed = 0;
-	prevTime = micros();
+	uint32_t prevTime = micros();
 		
+	strip->update();
+
 	while(elapsed < waitTime){
-		currTime = micros();
+		uint32_t currTime = micros();
 			
 		if(currTime < prevTime){
 			//handle counter reset ~ every 70 minutes

@@ -1,97 +1,128 @@
 #include "led.h"
 
-LedStrip::LedStrip(uint8_t _pin): pin(_pin), adaStrip(30, pin, NEO_GRB + NEO_KHZ800){}
+#include "hsv.h"
 
-void LedStrip::Initialize(){
-  adaStrip.begin();
-  // Initialize all pixels to 'off'
-  adaStrip.show(); 
+LedStrip::LedStrip(uint8_t _pin)
+: pin(_pin)
+, adaStrip(30, pin, NEO_GRB + NEO_KHZ800)
+, waitingForTime(0){
+	adaStrip.begin();
+
 }
 
-void LedStrip::SetBottle(uint8_t bottleNum, uint8_t displayMode, uint8_t color){
-  uint32_t ledColor[5];
-  uint32_t wait;
-  uint8_t idx;
+static uint32_t getRandomColor(){
+	uint8_t a = random() & 0xff;
+	uint8_t b = 255 - a;
 
-  // first select the desired color 
-  switch (color){ 
-    case '0': // rainbow
-	
-       ledColor[0] = adaStrip.Color(255, 255, 0); // yellow
-       ledColor[1] = adaStrip.Color(100, 255, 0); // yellow-green
-       ledColor[2] = adaStrip.Color(255, 100, 0); // red-yellow
-       ledColor[3] = adaStrip.Color(255, 0, 100); // red-purple
-       ledColor[4] = adaStrip.Color(255, 0, 255); // magenta
-    break;
-    case '1': // white
-      for( int i = 0; i < 5; i++){ 
-            ledColor[i] = adaStrip.Color(255, 255, 255); 
-      }
-    break;
-    case '2': // bottle specific
-      for( int i = 0; i < 6; i++){ 
-            ledColor[i] = BottleColors[bottleNum]; 
-      }
-    break;
-    case '3': // off default
-    default: uint32_t ledColor = adaStrip.Color(0, 0, 0); 
-  }
-
-  //display mode
-  switch(displayMode){ 
-    case Ramp: 
-	  if((bottleNum %  2) == 0){
-		wait = 300;
-		for(int i = 0; i < 5; i++){ 
-			idx = bottleNum * 5 + i;
-			adaStrip.setPixelColor(idx, ledColor[i]); 
-			adaStrip.show(); 
-			delay(wait - (i*50));
-			adaStrip.setPixelColor(idx, 0, 0, 0); 
-		}  
-	  }
-	  else{
-	    wait = 100;
-		for(int i = 4; i >= 0; i--){ 
-			idx = bottleNum * 5 + 5 - i;
-			adaStrip.setPixelColor(idx, ledColor[i]); 
-			adaStrip.show(); 
-			delay(wait + i * 50);
-			adaStrip.setPixelColor(idx, 0, 0, 0); 
-		}  
-	  }
-     break;
-     case Solid: 
-	   if((bottleNum %  2) == 0){
-		   for(int i = 0; i < 5; i++){ 
-			  idx = bottleNum * 5 + i;
-			  adaStrip.setPixelColor((bottleNum + i), ledColor[i]);
-			}
-	   }
-	   else{
-		   for(int i = 4; i >= 0; i--){ 
-			idx = bottleNum * 9 - i;
-			adaStrip.setPixelColor((bottleNum + i), ledColor[i]);
-		   }
-	   }
-     break;
-
-     case Blink: 
-	   if((bottleNum %  2) == 0){
-		   for(int i = 0; i < 5; i++){ 
-			  idx = bottleNum * 5 + i;
-			  adaStrip.setPixelColor((bottleNum + i), ledColor[i]);
-			}
-	   }
-	   else{
-		   for(int i = 4; i >= 0; i--){ 
-			idx = bottleNum * 9 - i;
-			adaStrip.setPixelColor((bottleNum + i), ledColor[i]);
-		   }
-	   }
-  }//end switch
-
-  adaStrip.show();
+	switch (random() % 3){
+	case 0: return Adafruit_NeoPixel::Color(a, b, 0);
+	case 1: return Adafruit_NeoPixel::Color(a, 0, b);
+	case 2: return Adafruit_NeoPixel::Color(0, a, b);
+	}
 }
 
 
+void LedStrip::setLed(Adafruit_NeoPixel & adaStrip, uint8_t column, uint8_t led, uint32_t color){
+
+	uint8_t i = column * 5;
+
+	if (column % 2) {
+		i += 4;
+
+		i -= led;
+	}
+	else{
+		i += led;
+	}
+
+	adaStrip.setPixelColor(i, color);
+}
+
+
+void LedStrip::setPattern(LedStrip::PatternType p){
+	waitingForTime = 0;
+	start = 0;
+	pattern = p;
+}
+
+void LedStrip::update(){
+	switch (pattern){
+	case LedStrip::Rotating:
+		updateRotating();
+		return;
+	case LedStrip::Pouring:
+		updatePouring();
+		return;
+	case LedStrip::Idle:
+		updateIdle();
+		return;
+	}
+}
+
+void LedStrip::updateIdle(){
+
+	if (millis() > waitingForTime){
+		HsvColor hsv = { start, 255, 255 };
+		
+		for (int i = 0; i < 5; ++i) {
+			RgbColor rgb = HsvToRgb(hsv);
+
+			for (int j = 0; j < 6; ++j){
+				LedStrip::setLed(adaStrip, j, i, Adafruit_NeoPixel::Color(rgb.r, rgb.g, rgb.b));
+			}
+
+			hsv.h += 51;
+		}
+
+		start += 100;
+		waitingForTime = millis() + 250;
+	}
+
+	adaStrip.show();
+}
+
+
+void LedStrip::updateRotating() {
+	if (millis() > waitingForTime){
+		HsvColor hsv = { start, 255, 255 };
+
+		for (int i = 0; i < 5; ++i) {
+			RgbColor rgb = HsvToRgb(hsv);
+
+			for (int j = 0; j < 6; ++j){
+				LedStrip::setLed(adaStrip, i, j, Adafruit_NeoPixel::Color(rgb.r, rgb.g, rgb.b));
+			}
+
+			hsv.h += 128;// 51;
+		}
+
+		waitingForTime = millis() + 250;
+		start += 51;
+	}
+
+	adaStrip.show();
+
+}
+
+
+void LedStrip::updatePouring() {
+	if (millis() > waitingForTime){
+		HsvColor hsv = { start, 255, 255 };
+
+		for (int i = 0; i < 5; ++i) {
+			RgbColor rgb = HsvToRgb(hsv);
+
+			for (int j = 0; j < 6; ++j){
+				LedStrip::setLed(adaStrip, i, j, Adafruit_NeoPixel::Color(rgb.r, rgb.g, rgb.b));
+			}
+
+			hsv.h += 51;
+		}
+
+		waitingForTime = millis() + 100;
+		start += 51;
+	}
+
+	adaStrip.show();
+
+}

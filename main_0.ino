@@ -35,7 +35,7 @@ Status status;
 
 StepperMotor* spireStepper;
 StepperMotor* hookStepper;
-//LedStrip* strip;
+LedStrip* strip;
 
 //pin assignments
 uint8_t hookEnable = 2;
@@ -102,12 +102,13 @@ void setup(){
   digitalWrite(hookLimitPin, HIGH);
 
   //LED initialization
-  //strip = new LedStrip(ledCtrlPin);
-  //strip -> Initialize();
+  strip = new LedStrip(ledCtrlPin);
   }
 
 void loop(){
 	
+	strip->update();
+
 	if(commandFlag){
 		Serial.println("In handling read...");
 		
@@ -159,7 +160,7 @@ void loop(){
 				1,
 				false);
 
-
+			strip->setPattern(LedStrip::Rotating);
 			// Spin to the right bottle.
 			if (numBottles > 0 && (rotation == CW || rotation == CCW)){
 				spireStepper->SetMotor(
@@ -170,6 +171,7 @@ void loop(){
 						numBottles);
 			}
 
+			strip->setPattern(LedStrip::Pouring);
 			if (pourAmount > 0){
 				if (dispenseType == Shot){
 					for (int i = 0; i < pourAmount; ++i){
@@ -177,14 +179,14 @@ void loop(){
 							StepperMotor::Slow,
 							hookPullAmount,
 							hookPullDirection);
-						delay(3000);
+						StepperMotor::busyWait(3000*1000);
 						hookStepper->SetMotor(
 							StepperMotor::Slow,
 							hookPullAmount + 100,
 							hookReleaseDirection,
 							hookLimitPin,
 							1);
-						delay(200);
+						StepperMotor::busyWait(200 * 1000);
 					}
 				}
 				if (dispenseType == FreePour){
@@ -194,8 +196,8 @@ void loop(){
 						hookPullDirection);
 
 					// TODO - configure this value (or send it from the rpi?)
-					delay(2000*pourAmount);
-					
+					StepperMotor::busyWait(2000 * pourAmount * 1000);
+
 					hookStepper->SetMotor(
 						StepperMotor::Slow,
 						hookPullAmount + 100,
@@ -205,7 +207,7 @@ void loop(){
 				}
 			}
 
-
+			strip->setPattern(LedStrip::Idle);
 
 			status = Idle;
 			break;
@@ -246,6 +248,7 @@ void loop(){
 				break;
 			}
 
+			strip->setPattern(LedStrip::Rotating);
 			if (!badFlag){
 				switch (motor){
 				case Spire:
@@ -262,6 +265,7 @@ void loop(){
 					break;
 				}
 			}
+			strip->setPattern(LedStrip::Idle);
 
 			status = Idle;
 			break;
@@ -285,7 +289,8 @@ void loop(){
 	else{
 	}
 
-	delay(20);
+	// TODO ? delay(20);
+
 }
 
 void receiveEvent(int numBytes){
