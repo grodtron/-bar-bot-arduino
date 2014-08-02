@@ -60,12 +60,34 @@ void setup(){
 
   // LED initialization
   strip = new LedStrip(ledCtrlPin);
-  strip -> Initialize();
+  strip->setPattern(LedStrip::Rotating);
 }
+
+static uint32_t waitingFor = 0;
+static LedStrip::PatternType nextPattern = LedStrip::Rotating;
 
 void loop(){
 
 	strip->update();
+	
+	if (waitingFor < millis()){
+		waitingFor = millis() + 3000;
+
+		strip->setPattern(nextPattern);
+
+		switch (nextPattern){
+		case LedStrip::Idle:
+			nextPattern = LedStrip::Rotating;
+			break;
+		case LedStrip::Rotating:
+			nextPattern = LedStrip::Pouring;
+			break;
+		case LedStrip::Pouring:
+			nextPattern = LedStrip::Idle;
+			break;
+		}
+	}
+	
 
 }
 
