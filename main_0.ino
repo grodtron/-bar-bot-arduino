@@ -107,6 +107,8 @@ void setup(){
 
 void loop(){
 	
+	static int8_t index = 0;
+
 	strip->update();
 
 	if(commandFlag){
@@ -160,9 +162,18 @@ void loop(){
 				1,
 				false);
 
-			strip->setPattern(LedStrip::Rotating);
+
+
 			// Spin to the right bottle.
 			if (numBottles > 0 && (rotation == CW || rotation == CCW)){
+				if (rotation == CW) {
+					index = (index + numBottles) % 6;
+				} else {
+					index = (index - numBottles) % 6;
+				}
+				
+				strip->setIndex(index);
+				strip->setPattern(LedStrip::Rotating);
 				spireStepper->SetMotor(
 						StepperMotor::MediumRamp,
 						((((StepperMotor::StepsPerRotation * numBottles)/6) *5)/2)/* + 500*/, // 500 overshoot - 5/2 is gear ratio
@@ -289,7 +300,7 @@ void loop(){
 	else{
 	}
 
-	// TODO ? delay(20);
+    StepperMotor::busyWait(20*1000);
 
 }
 

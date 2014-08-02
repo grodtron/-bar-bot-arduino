@@ -5,7 +5,9 @@
 LedStrip::LedStrip(uint8_t _pin)
 : pin(_pin)
 , adaStrip(30, pin, NEO_GRB + NEO_KHZ800)
-, waitingForTime(0){
+, waitingForTime(0)
+, pattern(LedStrip::Idle)
+, index(0) {
 	adaStrip.begin();
 
 }
@@ -81,23 +83,32 @@ void LedStrip::updateIdle(){
 	adaStrip.show();
 }
 
+static uint32_t colors[6] = {
+
+	Adafruit_NeoPixel::Color(0xff, 0x33, 0x00),
+	Adafruit_NeoPixel::Color(0x00, 0xff, 0x33),
+	Adafruit_NeoPixel::Color(0x33, 0x00, 0xff),
+
+	Adafruit_NeoPixel::Color(0x33, 0xff, 0x00),
+	Adafruit_NeoPixel::Color(0x00, 0x33, 0xff),
+	Adafruit_NeoPixel::Color(0xff, 0x00, 0x33)
+
+};
+
+void LedStrip::setIndex(uint8_t i) {
+	index = i;
+}
 
 void LedStrip::updateRotating() {
+	
 	if (millis() > waitingForTime){
-		HsvColor hsv = { start, 255, 255 };
-
-		for (int i = 0; i < 5; ++i) {
-			RgbColor rgb = HsvToRgb(hsv);
-
-			for (int j = 0; j < 6; ++j){
-				LedStrip::setLed(adaStrip, i, j, Adafruit_NeoPixel::Color(rgb.r, rgb.g, rgb.b));
-			}
-
-			hsv.h += 128;// 51;
+		uint32_t color = colors[index];
+	
+		for (int i = 0; i < 30; ++i){
+			adaStrip.setPixelColor(i, color);
 		}
 
-		waitingForTime = millis() + 250;
-		start += 51;
+		waitingForTime = ~((uint32_t)0); // maximum
 	}
 
 	adaStrip.show();

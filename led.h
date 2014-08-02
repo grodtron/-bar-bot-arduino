@@ -27,9 +27,11 @@ private:
 
 	unsigned long waitingForTime;
 	uint8_t start;
+	uint8_t index;
 
   public:
 
+	void setIndex(uint8_t i);
 	void setPattern(LedStrip::PatternType pattern);
 
 	LedStrip(uint8_t _pin);
