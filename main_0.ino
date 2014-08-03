@@ -72,9 +72,6 @@ void setup(){
   spireStepper = new StepperMotor(spireStep, spireDir, spireEnable, spireReset);
   spireStepper->Initialize();
 
-  Serial.begin(9600);           
-  Serial.println("Connected");
-
   pinMode(i2c_addr_pin, INPUT);
 
   //I2C initialization
@@ -83,7 +80,7 @@ void setup(){
 	  Wire.begin(0x11);
 	  hookPullDirection = StepperMotor::CounterClockwise;
 	  hookReleaseDirection = StepperMotor::Clockwise;
-	  hookPullAmount = 800;
+	  hookPullAmount = 1090;
   }
   else{
 	  Wire.begin(0x22);
@@ -112,46 +109,23 @@ void loop(){
 	strip->update();
 
 	if(commandFlag){
-		Serial.println("In handling read...");
 		
 		//parse according to communication type
 		switch(currentCommand){
 		case PouringRequest: 
 			{
-			Serial.println("In PouringRequest..."); 
 			uint8_t x=1;
 			uint8_t cmpCheckSum=0;
 			uint8_t numBottles, dispenseType, pourAmount, rotation, ledMode, ledColor, checkSum;
 			numBottles = msgBuffer[x++];
-					Serial.print("bottleNum: "); 
-					Serial.println(numBottles);
 			dispenseType = msgBuffer[x++];
-					Serial.print("dispenseType: "); 
-					Serial.println(dispenseType);
 			pourAmount = msgBuffer[x++];
-					Serial.print("pourAmount: "); 
-					Serial.println(pourAmount);
 			rotation = msgBuffer[x++];
-					Serial.print("rotation: ");
-					Serial.println(rotation);
 			ledMode = msgBuffer[x++];
-					Serial.print("ledMode: "); 
-					Serial.println(ledMode);
 			ledColor = msgBuffer[x++];
-					Serial.print("ledColor: "); 
-					Serial.println(ledColor);
 			checkSum = msgBuffer[x++];
-					Serial.print("checkSum: "); 
-					Serial.println(checkSum);
 
 			uint8_t csm = numBottles ^ dispenseType ^ pourAmount ^ rotation ^ ledMode ^ ledColor;
-
-			Serial.print("Computed checksum: ");
-			Serial.println(csm);
-			Serial.print("Received checksum: ");
-			Serial.println(checkSum);
-			Serial.print("badChecksum flag = ");
-			Serial.println(badChecksum);
 
 			// Safety: Zero the hook (this should have no effect since the hook should always start zeroed.)
 			hookStepper->SetMotor(
@@ -190,14 +164,14 @@ void loop(){
 							StepperMotor::Slow,
 							hookPullAmount,
 							hookPullDirection);
-						StepperMotor::busyWait(3000*1000);
+						delay(3000);
 						hookStepper->SetMotor(
 							StepperMotor::Slow,
 							hookPullAmount + 100,
 							hookReleaseDirection,
 							hookLimitPin,
 							1);
-						StepperMotor::busyWait(200 * 1000);
+						delay(200);
 					}
 				}
 				if (dispenseType == FreePour){
@@ -207,7 +181,7 @@ void loop(){
 						hookPullDirection);
 
 					// TODO - configure this value (or send it from the rpi?)
-					StepperMotor::busyWait(2000 * pourAmount * 1000);
+					delay( 2000 * pourAmount );
 
 					hookStepper->SetMotor(
 						StepperMotor::Slow,
@@ -225,23 +199,14 @@ void loop(){
 			}
 		case JogRequest: 
 			{
-			Serial.println("In JogRequest..."); 
 			uint8_t x=1;
 			bool badFlag;
 			uint8_t cmpCheckSum=0;
 			uint8_t motor, direction, nSteps, checkSum;
 			motor = msgBuffer[x++];
-					Serial.print("motor: "); 
-					Serial.println(motor);
 			direction = msgBuffer[x++];
-					Serial.print("direction: "); 
-					Serial.println(direction);
 			nSteps = msgBuffer[x++];
-					Serial.print("nSteps: "); 
-					Serial.println(nSteps);
 			checkSum = msgBuffer[x++];
-					Serial.print("checkSum: "); 
-					Serial.println(checkSum);
 
 			StepperMotor::Direction motorDir;
 
@@ -282,16 +247,12 @@ void loop(){
 			break;
 			}
 		case IdleRequest: 
-			Serial.println("In IdleRequest..."); 
 			break;
 		case CommandAckRequest:
-			Serial.println("In CommandAckRequest..."); 
 			break;
 		case FaultRequest:
-			Serial.println("In FaultRequest..."); 
 			break;
 		default: 
-			Serial.println("In default..."); 
 			break;
 		}
 
@@ -300,7 +261,7 @@ void loop(){
 	else{
 	}
 
-    StepperMotor::busyWait(20*1000);
+    delay(20);
 
 }
 
@@ -308,17 +269,18 @@ void receiveEvent(int numBytes){
 	int command;
 	if (Wire.available()){
 		command = Wire.read();
+		--numBytes;
 
-		// Ignore a command if we haven't dealt with the previous one yet.
-		if (command < CommandAckRequest && !commandFlag){
+		if (command < CommandAckRequest){
 			currentCommand = (CommunicationType)command;
 			msgBuffer[0] = command;
 
 			uint8_t computedCsum = command;
 			uint8_t i = 1;
-			while (Wire.available()){
+			while (numBytes && Wire.available()){
 				computedCsum ^= (msgBuffer[i] = Wire.read());
 				i++;
+				--numBytes;
 			}
 
 			// In computing the checksum we end up xor'ing the computed checksum with the
@@ -337,14 +299,9 @@ void receiveEvent(int numBytes){
 				}
 			}
 		}
-		// Ignore a command if we haven't dealt with the previous one yet
-		else if (command >= CommandAckRequest && !requestFlag){
+		else {
 			currentRequest = (CommunicationType)command;
 			requestFlag = true;
-		}
-
-		else{
-			// CONFUSION
 		}
 	}
 }
@@ -359,8 +316,7 @@ void requestEvent(){
 				Wire.write(0);
 			}
 			else{
-				timeRemaining = 255; // testing (no overflow please!)
-				Wire.write(timeRemaining); // TODO - do we care?
+				Wire.write(8); // TODO - do we care?
 			}
 			break;
 		case FaultRequest:

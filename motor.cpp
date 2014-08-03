@@ -39,10 +39,6 @@ false
 */
 bool StepperMotor::SetMotor(StepSpeed speed, uint16_t numSteps, Direction dir, uint8_t limit_pin, uint8_t limit_count, bool ignore_starting_on_switch){
 
-	Serial.println("Doing SetMotor with:");
-		Serial.print("   speed   : "); Serial.println(speed);
-		Serial.print("   numSteps: "); Serial.println(numSteps);
-		Serial.print("   dir     : "); Serial.println(dir);
 
 	 digitalWrite(enablePin, LOW); // enable it
 
@@ -89,17 +85,19 @@ bool StepperMotor::SetMotor(StepSpeed speed, uint16_t numSteps, Direction dir, u
 		digitalWrite(stepPin, HIGH);
 		busyWait(halfPeriod);
 
+		uint8_t accelerationFactor = 13;
+
 		// Ramp up the speed every four steps by decreasing the total period by one
 		// microsecond. This should take us from 1 to 3 kHz in around one second.
 		// TODO - this will require a bunch of tweaking for sure.
 		//
 		// NB it's also a non-linear acceleration, since as we increase the speed we
 		// also increase the rate at which we accelerate.
-		if (!(i%2) && (i < 2*(startHalfPeriod - endHalfPeriod)) && (halfPeriod > endHalfPeriod)){
+		if (!(i%accelerationFactor) && (i < accelerationFactor*(startHalfPeriod - endHalfPeriod)) && (halfPeriod > endHalfPeriod)){
 			--halfPeriod;
 		}
 		
-		if (!(i%2) && (numSteps - i) <= 2*(startHalfPeriod - endHalfPeriod)){
+		if (!(i%accelerationFactor) && (numSteps - i) <= accelerationFactor*(startHalfPeriod - endHalfPeriod)){
 			++halfPeriod;
 		}
 		
@@ -143,7 +141,7 @@ void StepperMotor::busyWait(uint32_t waitTime){
 	uint32_t elapsed = 0;
 	uint32_t prevTime = micros();
 		
-	strip->update();
+	//strip->update();
 
 	while(elapsed < waitTime){
 		uint32_t currTime = micros();
