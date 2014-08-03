@@ -6,6 +6,9 @@
 #define MSGSIZE 32
 #define BOTTLESTEP_AMT 3333 //todo: change with calibration
 
+#define cli() ;
+#define sei() ;
+
 enum CommunicationType{PouringRequest = 0, IdleRequest = 1, JogRequest = 2, CommandAckRequest = 30, FaultRequest = 31};
 
 enum GlobalResponseCodes{UnknownRequest=254, InternalError=255};
@@ -108,8 +111,8 @@ void loop(){
 
 	strip->update();
 
+	cli();
 	if(commandFlag){
-		
 		//parse according to communication type
 		switch(currentCommand){
 		case PouringRequest: 
@@ -117,6 +120,7 @@ void loop(){
 			uint8_t x=1;
 			uint8_t cmpCheckSum=0;
 			uint8_t numBottles, dispenseType, pourAmount, rotation, ledMode, ledColor, checkSum;
+
 			numBottles = msgBuffer[x++];
 			dispenseType = msgBuffer[x++];
 			pourAmount = msgBuffer[x++];
@@ -124,6 +128,8 @@ void loop(){
 			ledMode = msgBuffer[x++];
 			ledColor = msgBuffer[x++];
 			checkSum = msgBuffer[x++];
+			sei();
+
 
 			uint8_t csm = numBottles ^ dispenseType ^ pourAmount ^ rotation ^ ledMode ^ ledColor;
 
@@ -208,6 +214,8 @@ void loop(){
 			nSteps = msgBuffer[x++];
 			checkSum = msgBuffer[x++];
 
+			sei();
+
 			StepperMotor::Direction motorDir;
 
 			badFlag = false;
@@ -260,14 +268,15 @@ void loop(){
 	}
 	else{
 	}
-
+	sei();
     delay(20);
 
 }
 
 void receiveEvent(int numBytes){
-	int command;
-	if (Wire.available()){
+	cli();
+	if (numBytes){
+		int command;
 		command = Wire.read();
 		--numBytes;
 
@@ -277,7 +286,7 @@ void receiveEvent(int numBytes){
 
 			uint8_t computedCsum = command;
 			uint8_t i = 1;
-			while (numBytes && Wire.available()){
+			while (numBytes){
 				computedCsum ^= (msgBuffer[i] = Wire.read());
 				i++;
 				--numBytes;
@@ -304,16 +313,19 @@ void receiveEvent(int numBytes){
 			requestFlag = true;
 		}
 	}
+	sei();
 }
 
 void requestEvent(){
-
+	cli();
 	if(requestFlag){ //redundant check
+		requestFlag = false;
 
 		switch(currentRequest){
 		case CommandAckRequest:
 			if(badChecksum){
 				Wire.write(0);
+				badChecksum = false;
 			}
 			else{
 				Wire.write(8); // TODO - do we care?
@@ -328,11 +340,14 @@ void requestEvent(){
 			Wire.write(UnknownRequest);
 			break;
 		}	
-		requestFlag = false;
 	}
 	else{ // Client should retry request after a delay
+		commandFlag = false;
+		requestFlag = false;
+		badChecksum = false;
 		Wire.write(InternalError);
 	}
+	sei();
 }
 
 
