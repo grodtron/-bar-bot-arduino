@@ -6,8 +6,6 @@
 #define MSGSIZE 32
 #define BOTTLESTEP_AMT 3333 //todo: change with calibration
 
-#define cli() ;
-#define sei() ;
 
 enum CommunicationType{PouringRequest = 0, IdleRequest = 1, JogRequest = 2, CommandAckRequest = 30, FaultRequest = 31};
 
@@ -111,7 +109,6 @@ void loop(){
 
 	strip->update();
 
-	cli();
 	if(commandFlag){
 		//parse according to communication type
 		switch(currentCommand){
@@ -128,7 +125,6 @@ void loop(){
 			ledMode = msgBuffer[x++];
 			ledColor = msgBuffer[x++];
 			checkSum = msgBuffer[x++];
-			sei();
 
 
 			uint8_t csm = numBottles ^ dispenseType ^ pourAmount ^ rotation ^ ledMode ^ ledColor;
@@ -214,8 +210,6 @@ void loop(){
 			nSteps = msgBuffer[x++];
 			checkSum = msgBuffer[x++];
 
-			sei();
-
 			StepperMotor::Direction motorDir;
 
 			badFlag = false;
@@ -268,17 +262,14 @@ void loop(){
 	}
 	else{
 	}
-	sei();
     delay(20);
 
 }
 
 void receiveEvent(int numBytes){
-	cli();
-	if (numBytes){
+	if ( Wire.available() ){
 		int command;
 		command = Wire.read();
-		--numBytes;
 
 		if (command < CommandAckRequest){
 			currentCommand = (CommunicationType)command;
@@ -286,10 +277,9 @@ void receiveEvent(int numBytes){
 
 			uint8_t computedCsum = command;
 			uint8_t i = 1;
-			while (numBytes){
+			while ( Wire.available() && (i < MSGSIZE) ){
 				computedCsum ^= (msgBuffer[i] = Wire.read());
 				i++;
-				--numBytes;
 			}
 
 			// In computing the checksum we end up xor'ing the computed checksum with the
@@ -312,12 +302,16 @@ void receiveEvent(int numBytes){
 			currentRequest = (CommunicationType)command;
 			requestFlag = true;
 		}
+
 	}
-	sei();
+
+	// MUST completely consume this buffer every time or else we will receive no subsequent
+	// RX events and our state will essentially be locked forever. (see Wire.cpp:253)
+	while (Wire.available()) Wire.read();
+
 }
 
 void requestEvent(){
-	cli();
 	if(requestFlag){ //redundant check
 		requestFlag = false;
 
@@ -342,12 +336,8 @@ void requestEvent(){
 		}	
 	}
 	else{ // Client should retry request after a delay
-		commandFlag = false;
-		requestFlag = false;
-		badChecksum = false;
 		Wire.write(InternalError);
 	}
-	sei();
 }
 
 
