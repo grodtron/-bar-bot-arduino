@@ -14,7 +14,8 @@ class StepperMotor {
 
 
   public:
-    static void busyWait(uint32_t waitTime);
+	static void busyWait(unsigned long waitTime);
+	static void busyWaitMillis(unsigned long waitTime);
 
 	enum Direction{ Clockwise, CounterClockwise };
 	enum StepSpeed{ Slow, Medium, MediumRamp };

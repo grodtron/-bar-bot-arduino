@@ -101,6 +101,7 @@ void setup(){
 
   //LED initialization
   strip = new LedStrip(ledCtrlPin);
+
   }
 
 void loop(){
@@ -158,32 +159,38 @@ void loop(){
 						numBottles);
 			}
 
-			strip->setPattern(LedStrip::Pouring);
 			if (pourAmount > 0){
 				if (dispenseType == Shot){
+
 					for (int i = 0; i < pourAmount; ++i){
 						hookStepper->SetMotor(
 							StepperMotor::Slow,
 							hookPullAmount,
 							hookPullDirection);
-						delay(3000);
+
+						strip->setPattern(LedStrip::Pouring, (3000 + hookPullAmount - 1000/*extra*/)); // hook steps are at 1kHz -> each step is 1 ms
+
+						StepperMotor::busyWaitMillis(3000); // update lights during this movement.
 						hookStepper->SetMotor(
 							StepperMotor::Slow,
 							hookPullAmount + 100,
 							hookReleaseDirection,
 							hookLimitPin,
 							1);
-						delay(200);
+						StepperMotor::busyWaitMillis(200);
 					}
 				}
 				if (dispenseType == FreePour){
+
 					hookStepper->SetMotor(
 						StepperMotor::Slow,
 						hookPullAmount,
 						hookPullDirection);
 
+					strip->setPattern(LedStrip::Pouring, (2000 * pourAmount) + hookPullAmount - 1000 ); // hook steps are at 1kHz -> each step is 1 ms
+
 					// TODO - configure this value (or send it from the rpi?)
-					delay( 2000 * pourAmount );
+					StepperMotor::busyWaitMillis(2000 * pourAmount);
 
 					hookStepper->SetMotor(
 						StepperMotor::Slow,

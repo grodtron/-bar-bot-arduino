@@ -27,12 +27,14 @@ private:
 
 	unsigned long waitingForTime;
 	uint8_t start;
+	unsigned long duration;
+	unsigned long remaining;
 	uint8_t index;
 
   public:
 
 	void setIndex(uint8_t i);
-	void setPattern(LedStrip::PatternType pattern);
+	void setPattern(LedStrip::PatternType pattern, unsigned long duration=0);
 
 	LedStrip(uint8_t _pin);
 

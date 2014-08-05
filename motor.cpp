@@ -137,14 +137,19 @@ bool StepperMotor::SetMotor(StepSpeed speed, uint16_t numSteps, Direction dir, u
 
 }
 
-void StepperMotor::busyWait(uint32_t waitTime){
-	uint32_t elapsed = 0;
-	uint32_t prevTime = micros();
-		
-	//strip->update();
+void StepperMotor::busyWaitMillis(unsigned long waitTime){
+	busyWait(1000 * waitTime);
+}
+
+
+void StepperMotor::busyWait(unsigned long waitTime){
+	unsigned long elapsed = 0;
+	unsigned long prevTime = micros();
 
 	while(elapsed < waitTime){
-		uint32_t currTime = micros();
+		strip->update();
+
+		unsigned long currTime = micros();
 			
 		if(currTime < prevTime){
 			//handle counter reset ~ every 70 minutes
@@ -158,7 +163,6 @@ void StepperMotor::busyWait(uint32_t waitTime){
 			//normal case
 			elapsed = currTime - prevTime;	
 		}
-	    //todo: add small delay here to avoid spin?
 	}
 }
 
