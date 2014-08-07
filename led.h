@@ -9,7 +9,7 @@ enum LEDColor{Rainbow, White, Bottle, Off};
 class LedStrip {
 public:
 	enum PatternType {
-		Pouring, Rotating, Idle
+		Pouring, Rotating, Idle, Danger
 	};
 
 private:
@@ -24,6 +24,7 @@ private:
 	void updateRotating();
 	void updatePouring();
 	void updateIdle();
+	void updateDanger();
 
 	unsigned long waitingForTime;
 	uint8_t start;

@@ -12,6 +12,7 @@ LedStrip::LedStrip(uint8_t _pin)
 , remaining(0)
 , index(0) {
 	adaStrip.begin();
+	adaStrip.setBrightness(190);
 
 }
 
@@ -63,6 +64,9 @@ void LedStrip::update(){
 	case LedStrip::Idle:
 		updateIdle();
 		return;
+	case LedStrip::Danger:
+		updateDanger();
+		return;
 	}
 }
 
@@ -83,6 +87,21 @@ static uint8_t sin_tab[256] = {
 	117, 115, 112, 109, 106, 103, 100, 97, 95, 92, 89, 86, 83, 80, 77, 74, 71, 68, 65, 62, 59, 56,
 	53, 49, 46, 43, 40, 37, 34, 31, 28, 25, 21, 18, 15, 12, 9, 6, 3 };
 
+
+void LedStrip::updateDanger(){
+	if (millis() > waitingForTime){
+		for (int i = 0; i < 6; ++i) {
+			uint32_t color = Adafruit_NeoPixel::Color(0xff, 0, 0);
+
+			for (int j = 0; j < 5; ++j){
+				LedStrip::setLed(adaStrip, i, j, color);
+			}
+
+		}
+		waitingForTime = millis() + 200;
+		adaStrip.show();
+	}
+}
 
 void LedStrip::updateIdle(){	
 	if (millis() > waitingForTime){

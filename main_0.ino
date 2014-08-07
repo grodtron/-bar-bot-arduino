@@ -141,35 +141,68 @@ void loop(){
 				1,
 				false);
 
-			// Spin to the right bottle.
-			if (numBottles > 0 && (rotation == CW || rotation == CCW)){
-				if (rotation == CW) {
-					index = (index + numBottles) % 6;
-				} else {
-					index = (index - numBottles) % 6;
+			if (digitalRead(hookLimitPin)){
+				// Thing is tripped, show red and wait to be reset
+				strip->setPattern(LedStrip::Danger);
+				strip->update();
+				while (true){
+					delay(100);
 				}
-				
-				strip->setIndex(index);
-				spireStepper->SetMotor(
+			}else{
+
+				// Spin to the right bottle.
+				if (numBottles > 0 && (rotation == CW || rotation == CCW)){
+					if (rotation == CW) {
+						index = (index + numBottles) % 6;
+					}
+					else {
+						index = (index - numBottles) % 6;
+					}
+
+					strip->setIndex(index);
+					spireStepper->SetMotor(
 						StepperMotor::MediumRamp,
-						((((StepperMotor::StepsPerRotation * numBottles)/6) *5)/2)/* + 500*/, // 500 overshoot - 5/2 is gear ratio
-						rotation==CW ? StepperMotor::Clockwise : StepperMotor::CounterClockwise,
+						((((StepperMotor::StepsPerRotation * numBottles) / 6) * 5) / 2)/* + 500*/, // 500 overshoot - 5/2 is gear ratio
+						rotation == CW ? StepperMotor::Clockwise : StepperMotor::CounterClockwise,
 						spireLimitPin,
 						numBottles);
-			}
+				}
 
-			if (pourAmount > 0){
-				if (dispenseType == Shot){
+				if (pourAmount > 0){
+					if (dispenseType == Shot){
 
-					for (int i = 0; i < pourAmount; ++i){
+						for (int i = 0; i < pourAmount; ++i){
+							hookStepper->SetMotor(
+								StepperMotor::Slow,
+								hookPullAmount,
+								hookPullDirection);
+
+							strip->setPattern(LedStrip::Pouring, 3000); // hook steps are at 1kHz -> each step is 1 ms
+
+							StepperMotor::busyWaitMillis(3000); // update lights during this movement.
+
+							strip->setPattern(LedStrip::Rotating);
+
+							hookStepper->SetMotor(
+								StepperMotor::Slow,
+								hookPullAmount + 100,
+								hookReleaseDirection,
+								hookLimitPin,
+								1);
+							StepperMotor::busyWaitMillis(200);
+						}
+					}
+					if (dispenseType == FreePour){
+
 						hookStepper->SetMotor(
 							StepperMotor::Slow,
 							hookPullAmount,
 							hookPullDirection);
 
-						strip->setPattern(LedStrip::Pouring, 3000); // hook steps are at 1kHz -> each step is 1 ms
+						strip->setPattern(LedStrip::Pouring, 2000 * pourAmount); // hook steps are at 1kHz -> each step is 1 ms
 
-						StepperMotor::busyWaitMillis(3000); // update lights during this movement.
+						// TODO - configure this value (or send it from the rpi?)
+						StepperMotor::busyWaitMillis(2000 * pourAmount);
 
 						strip->setPattern(LedStrip::Rotating);
 
@@ -179,34 +212,11 @@ void loop(){
 							hookReleaseDirection,
 							hookLimitPin,
 							1);
-						StepperMotor::busyWaitMillis(200);
 					}
 				}
-				if (dispenseType == FreePour){
 
-					hookStepper->SetMotor(
-						StepperMotor::Slow,
-						hookPullAmount,
-						hookPullDirection);
-
-					strip->setPattern(LedStrip::Pouring, 2000 * pourAmount ); // hook steps are at 1kHz -> each step is 1 ms
-
-					// TODO - configure this value (or send it from the rpi?)
-					StepperMotor::busyWaitMillis(2000 * pourAmount);
-
-					strip->setPattern(LedStrip::Rotating);
-
-					hookStepper->SetMotor(
-						StepperMotor::Slow,
-						hookPullAmount + 100,
-						hookReleaseDirection,
-						hookLimitPin,
-						1);
-				}
+				strip->setPattern(LedStrip::Idle);
 			}
-
-			strip->setPattern(LedStrip::Idle);
-
 			status = Idle;
 			break;
 			}
