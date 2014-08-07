@@ -130,6 +130,8 @@ void loop(){
 
 			uint8_t csm = numBottles ^ dispenseType ^ pourAmount ^ rotation ^ ledMode ^ ledColor;
 
+			strip->setPattern(LedStrip::Rotating);
+
 			// Safety: Zero the hook (this should have no effect since the hook should always start zeroed.)
 			hookStepper->SetMotor(
 				StepperMotor::Slow,
@@ -138,8 +140,6 @@ void loop(){
 				hookLimitPin,
 				1,
 				false);
-
-
 
 			// Spin to the right bottle.
 			if (numBottles > 0 && (rotation == CW || rotation == CCW)){
@@ -150,7 +150,6 @@ void loop(){
 				}
 				
 				strip->setIndex(index);
-				strip->setPattern(LedStrip::Rotating);
 				spireStepper->SetMotor(
 						StepperMotor::MediumRamp,
 						((((StepperMotor::StepsPerRotation * numBottles)/6) *5)/2)/* + 500*/, // 500 overshoot - 5/2 is gear ratio
@@ -168,9 +167,12 @@ void loop(){
 							hookPullAmount,
 							hookPullDirection);
 
-						strip->setPattern(LedStrip::Pouring, (3000 + hookPullAmount - 1000/*extra*/)); // hook steps are at 1kHz -> each step is 1 ms
+						strip->setPattern(LedStrip::Pouring, 3000); // hook steps are at 1kHz -> each step is 1 ms
 
 						StepperMotor::busyWaitMillis(3000); // update lights during this movement.
+
+						strip->setPattern(LedStrip::Rotating);
+
 						hookStepper->SetMotor(
 							StepperMotor::Slow,
 							hookPullAmount + 100,
@@ -187,10 +189,12 @@ void loop(){
 						hookPullAmount,
 						hookPullDirection);
 
-					strip->setPattern(LedStrip::Pouring, (2000 * pourAmount) + hookPullAmount - 1000 ); // hook steps are at 1kHz -> each step is 1 ms
+					strip->setPattern(LedStrip::Pouring, 2000 * pourAmount ); // hook steps are at 1kHz -> each step is 1 ms
 
 					// TODO - configure this value (or send it from the rpi?)
 					StepperMotor::busyWaitMillis(2000 * pourAmount);
+
+					strip->setPattern(LedStrip::Rotating);
 
 					hookStepper->SetMotor(
 						StepperMotor::Slow,
